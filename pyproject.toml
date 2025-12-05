@@ -1,0 +1,16 @@
+[project]
+name = "ocr-process-pipeline"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "django>=5.2.9",
+    "flask>=3.1.2",
+    "flask-socketio>=5.5.1",
+    "paddleocr[all]>=3.3.2",
+    "paddlepaddle>=3.2.2",
+    "pytesseract>=0.3.13",
+    "spacy>=3.8.11",
+    "transformers>=4.57.3",
+]
