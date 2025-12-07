@@ -1,0 +1,311 @@
+# Cloud Deployment Guide
+
+## What's Included in Docker Images
+✅ Nginx (containerized)
+✅ Python 3.11
+✅ Bun (for building Angular)
+✅ Flask backend
+✅ Angular frontend
+✅ PostgreSQL
+✅ Redis
+
+## Platform-Specific Requirements
+
+### 1. AWS / DigitalOcean / Azure / GCP (Full VPS)
+**Requirements on Server:**
+- Docker
+- Docker Compose
+
+**Deploy Command:**
+```bash
+# Clone repo
+git clone <your-repo>
+cd ocr-process-pipeline-poc
+
+# Deploy
+./deploy.sh docker-compose prod
+```
+
+**Everything else runs in containers!**
+
+---
+
+### 2. Kubernetes (AWS EKS / GKE / Azure AKS)
+**Requirements:**
+- kubectl configured
+- Docker registry (ECR/GCR/ACR)
+
+**Steps:**
+```bash
+# Build and push to registry
+docker build -t your-registry/ocr-pipeline:latest .
+docker push your-registry/ocr-pipeline:latest
+
+# Update k8s/deployment.yaml image reference
+# Then deploy
+kubectl apply -f k8s/deployment.yaml
+```
+
+---
+
+### 3. Replit ❌ NOT SUITABLE
+**Why it won't work:**
+- Replit doesn't support Docker
+- Replit doesn't support multi-container apps
+- Limited to single web server
+- No persistent storage for PostgreSQL
+
+**Alternative for Replit:**
+Would need complete restructure without Docker
+
+---
+
+### 4. Vercel ❌ NOT SUITABLE
+**Why it won't work:**
+- Vercel is for **frontend only** (static sites, Next.js, serverless)
+- Cannot run Flask backend
+- Cannot run PostgreSQL
+- Cannot run Docker containers
+- No WebSocket support for SocketIO
+
+**Alternative for Vercel:**
+- Deploy only Angular frontend to Vercel
+- Deploy Flask backend separately to Railway/Render/Heroku
+- Use external PostgreSQL (Supabase, Neon)
+
+---
+
+### 5. Railway ✅ GOOD OPTION
+**What Railway provides:**
+- Docker support ✅
+- PostgreSQL addon ✅
+- Redis addon ✅
+- Automatic HTTPS ✅
+
+**Deploy:**
+```bash
+# Railway.toml (create this file)
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = ""
+healthcheckPath = "/health"
+```
+
+Then: `railway up`
+
+---
+
+### 6. Render ✅ GOOD OPTION
+**What Render provides:**
+- Docker support ✅
+- PostgreSQL addon ✅
+- Redis addon ✅
+- Free SSL ✅
+
+**Deploy:**
+Create `render.yaml`:
+```yaml
+services:
+  - type: web
+    name: ocr-pipeline
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: FLASK_ENV
+        value: production
+```
+
+---
+
+### 7. Heroku ✅ GOOD OPTION
+**What Heroku provides:**
+- Docker support (via heroku.yml) ✅
+- PostgreSQL addon ✅
+- Redis addon ✅
+
+**Deploy:**
+Create `heroku.yml`:
+```yaml
+build:
+  docker:
+    web: Dockerfile
+```
+
+Then:
+```bash
+heroku container:push web
+heroku container:release web
+```
+
+---
+
+### 8. AWS Lightsail ✅ EASIEST VPS
+**What you need:**
+- Lightsail instance ($5-10/month)
+- Docker pre-installed image
+
+**Deploy:**
+```bash
+# SSH into Lightsail
+ssh ubuntu@your-instance
+
+# Install Docker (if needed)
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Clone and deploy
+git clone <your-repo>
+cd ocr-process-pipeline-poc
+./deploy.sh docker-compose prod
+```
+
+---
+
+### 9. Fly.io ✅ EXCELLENT OPTION
+**What Fly.io provides:**
+- Multi-region Docker ✅
+- PostgreSQL ✅
+- Redis ✅
+- Free tier ✅
+
+**Deploy:**
+```bash
+# Install flyctl
+curl -L https://fly.io/install.sh | sh
+
+# Initialize
+fly launch
+
+# Deploy
+fly deploy
+```
+
+---
+
+## Recommended Platforms by Use Case
+
+### Best for Quick Testing
+1. **Railway** - Easiest setup, auto-deploys from GitHub
+2. **Fly.io** - Free tier, excellent for demos
+
+### Best for Production
+1. **AWS EKS** (Kubernetes) - Scalable, enterprise-grade
+2. **AWS Lightsail** - Simple VPS, predictable pricing
+3. **DigitalOcean Droplets** - Good price/performance
+
+### NOT Suitable
+- ❌ Replit (no Docker)
+- ❌ Vercel (frontend only)
+- ❌ Netlify (frontend only)
+- ❌ GitHub Pages (static only)
+
+---
+
+## What You Need on Server (Summary)
+
+### For Docker Compose Deployment
+```bash
+# Only need Docker!
+docker --version   # Must be installed
+docker-compose --version  # Must be installed
+
+# Everything else is in containers:
+# ✅ Nginx
+# ✅ Python + Flask
+# ✅ Bun (build-time only)
+# ✅ PostgreSQL
+# ✅ Redis
+```
+
+### For Kubernetes Deployment
+```bash
+# Need Kubernetes cluster + kubectl
+kubectl version
+
+# Everything else is in containers
+```
+
+---
+
+## Linux Setup Scripts
+
+For Linux servers, create these scripts:
+
+### setup-server.sh (One-time server setup)
+```bash
+#!/bin/bash
+# Install Docker and Docker Compose on Linux server
+
+# Update system
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Install Docker Compose
+sudo apt-get install docker-compose -y
+
+# Add current user to docker group
+sudo usermod -aG docker $USER
+
+# Start Docker
+sudo systemctl enable docker
+sudo systemctl start docker
+
+echo "✅ Server setup complete!"
+echo "⚠️  Please log out and back in for Docker permissions"
+```
+
+### deploy-server.sh (Deploy on Linux server)
+```bash
+#!/bin/bash
+# Deploy OCR Pipeline on Linux server
+
+# Pull latest code
+git pull origin main
+
+# Stop old containers
+docker-compose -f compose.yaml down
+
+# Build and start
+docker-compose -f compose.yaml up -d --build
+
+# Show status
+docker-compose -f compose.yaml ps
+
+echo "✅ Deployment complete!"
+echo "🌐 Access at: http://your-server-ip"
+```
+
+---
+
+## Quick Decision Matrix
+
+| Platform | Docker | DB | Cost | Difficulty | Recommended |
+|----------|--------|----|----|-----------|-------------|
+| Railway | ✅ | ✅ | $$ | Easy | ✅ Yes |
+| Render | ✅ | ✅ | $$ | Easy | ✅ Yes |
+| Fly.io | ✅ | ✅ | Free/$$ | Medium | ✅ Yes |
+| AWS Lightsail | ✅ | Manual | $ | Easy | ✅ Yes |
+| Heroku | ✅ | ✅ | $$$ | Easy | ⚠️  Expensive |
+| Replit | ❌ | ❌ | $ | - | ❌ No |
+| Vercel | ❌ | ❌ | Free | - | ❌ No |
+| DigitalOcean | ✅ | Manual | $$ | Medium | ✅ Yes |
+| AWS EKS | ✅ | ✅ | $$$$ | Hard | ✅ Production |
+
+---
+
+## Nginx on Server
+
+**You DON'T need to install Nginx separately!**
+
+The `compose.yaml` includes:
+```yaml
+nginx:
+  image: nginx:alpine  # ← Nginx runs in container
+```

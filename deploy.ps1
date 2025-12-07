@@ -49,12 +49,12 @@ function Deploy-DockerCompose {
     try {
         $dockerVersion = docker version --format '{{.Server.Version}}' 2>$null
         if ($dockerVersion) {
-            Write-Host "   ✓ Docker is running: v$dockerVersion" -ForegroundColor Green
+            Write-Host "   Docker is running: v$dockerVersion" -ForegroundColor Green
         } else {
             throw "Docker not responding"
         }
     } catch {
-        Write-Host "   ✗ Docker is not running!" -ForegroundColor Red
+        Write-Host "   Docker is not running!" -ForegroundColor Red
         Write-Host "   Please start Docker Desktop first." -ForegroundColor Cyan
         exit 1
     }
@@ -63,7 +63,7 @@ function Deploy-DockerCompose {
     Write-Host ""
     Write-Host "2. Stopping existing containers..." -ForegroundColor Yellow
     docker-compose -f $composeFile down 2>$null
-    Write-Host "   ✓ Cleanup complete" -ForegroundColor Green
+    Write-Host "   Cleanup complete" -ForegroundColor Green
     
     # Build
     Write-Host ""
@@ -72,9 +72,9 @@ function Deploy-DockerCompose {
     docker-compose -f $composeFile build
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "   ✓ Images built successfully" -ForegroundColor Green
+        Write-Host "   Images built successfully" -ForegroundColor Green
     } else {
-        Write-Host "   ✗ Build failed!" -ForegroundColor Red
+        Write-Host "   Build failed!" -ForegroundColor Red
         exit 1
     }
     
@@ -84,9 +84,9 @@ function Deploy-DockerCompose {
     docker-compose -f $composeFile up -d
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "   ✓ Services started" -ForegroundColor Green
+        Write-Host "   Services started" -ForegroundColor Green
     } else {
-        Write-Host "   ✗ Failed to start services!" -ForegroundColor Red
+        Write-Host "   Failed to start services!" -ForegroundColor Red
         exit 1
     }
     
@@ -140,12 +140,12 @@ function Deploy-Kubernetes {
     try {
         $kubectlVersion = kubectl version --client --short 2>$null
         if ($kubectlVersion) {
-            Write-Host "   ✓ kubectl is installed" -ForegroundColor Green
+            Write-Host "   kubectl is installed" -ForegroundColor Green
         } else {
             throw "kubectl not found"
         }
     } catch {
-        Write-Host "   ✗ kubectl not installed!" -ForegroundColor Red
+        Write-Host "   kubectl not installed!" -ForegroundColor Red
         exit 1
     }
     
@@ -155,12 +155,12 @@ function Deploy-Kubernetes {
     try {
         $context = kubectl config current-context 2>$null
         if ($context) {
-            Write-Host "   ✓ Connected to cluster: $context" -ForegroundColor Green
+            Write-Host "   Connected to cluster: $context" -ForegroundColor Green
         } else {
             throw "No cluster context"
         }
     } catch {
-        Write-Host "   ✗ Not connected to any cluster!" -ForegroundColor Red
+        Write-Host "   Not connected to any cluster!" -ForegroundColor Red
         Write-Host "   Start Docker Desktop Kubernetes or Minikube first." -ForegroundColor Cyan
         exit 1
     }
@@ -170,7 +170,7 @@ function Deploy-Kubernetes {
     Write-Host "3. Cleaning up existing deployment..." -ForegroundColor Yellow
     kubectl delete -f $k8sFile 2>$null
     Start-Sleep -Seconds 5
-    Write-Host "   ✓ Cleanup complete" -ForegroundColor Green
+    Write-Host "   Cleanup complete" -ForegroundColor Green
     
     # Build image
     Write-Host ""
@@ -180,9 +180,9 @@ function Deploy-Kubernetes {
     docker build -t $imageName -f $dockerfile .
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "   ✓ Image built successfully" -ForegroundColor Green
+        Write-Host "   Image built successfully" -ForegroundColor Green
     } else {
-        Write-Host "   ✗ Build failed!" -ForegroundColor Red
+        Write-Host "   Build failed!" -ForegroundColor Red
         exit 1
     }
     
@@ -192,9 +192,9 @@ function Deploy-Kubernetes {
     kubectl apply -f $k8sFile
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "   ✓ Configuration applied" -ForegroundColor Green
+        Write-Host "   Configuration applied" -ForegroundColor Green
     } else {
-        Write-Host "   ✗ Failed to apply configuration!" -ForegroundColor Red
+        Write-Host "   Failed to apply configuration!" -ForegroundColor Red
         exit 1
     }
     
@@ -233,13 +233,13 @@ function Deploy-Kubernetes {
         
         Start-Sleep -Seconds 5
         $elapsed += 5
-        Write-Host "   Waiting... ($elapsed/$timeout seconds)" -ForegroundColor Gray
+        Write-Host "   Waiting... ($elapsed / $timeout seconds)" -ForegroundColor Gray
     }
     
     if ($ready) {
-        Write-Host "   ✓ All pods are ready!" -ForegroundColor Green
+        Write-Host "   All pods are ready!" -ForegroundColor Green
     } else {
-        Write-Host "   ⚠ Timeout waiting for pods" -ForegroundColor Yellow
+        Write-Host "   Timeout waiting for pods" -ForegroundColor Yellow
         Write-Host "   Pods may still be starting..." -ForegroundColor Gray
     }
     
@@ -254,13 +254,13 @@ function Deploy-Kubernetes {
     $issues = kubectl get pods -n $namespace --field-selector=status.phase!=Running,status.phase!=Succeeded -o json 2>$null | ConvertFrom-Json
     
     if ($issues.items -and $issues.items.Count -gt 0) {
-        Write-Host "   ⚠ Some pods have issues:" -ForegroundColor Yellow
+        Write-Host "   Some pods have issues:" -ForegroundColor Yellow
         kubectl get pods -n $namespace --field-selector=status.phase!=Running,status.phase!=Succeeded
         Write-Host ""
         Write-Host "   Check logs with:" -ForegroundColor Cyan
         Write-Host "   kubectl logs -f deployment/flask-app-deployment -n $namespace" -ForegroundColor White
     } else {
-        Write-Host "   ✓ No issues detected" -ForegroundColor Green
+        Write-Host "   No issues detected" -ForegroundColor Green
     }
     
     # Success

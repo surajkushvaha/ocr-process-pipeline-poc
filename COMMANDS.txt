@@ -1,32 +1,47 @@
-# OCR Pipeline - Deployment Commands
+# **OCR Pipeline Deployment Guide (Clean & Proper Version)**
 
-Quick reference for all deployment commands.
+## 🚀 **Quick Start Commands**
 
-## 🚀 Quick Start Commands
+### **Windows (PowerShell)**
 
-### Development (Recommended)
 ```powershell
+# Development (Recommended)
 .\deploy.ps1 -Target docker-compose -Environment dev
-```
 
-### Production
-```powershell
+# Production
 .\deploy.ps1 -Target docker-compose -Environment prod
-```
 
-### Kubernetes Dev
-```powershell
+# Kubernetes Dev
 .\deploy.ps1 -Target k8s -Environment dev
+
+# Kubernetes Prod
+.\deploy.ps1 -Target k8s -Environment prod
 ```
 
-### Kubernetes Prod
-```powershell
-.\deploy.ps1 -Target k8s -Environment prod
+### **Linux/macOS (Bash)**
+
+```bash
+# Make executable
+chmod +x deploy.sh
+
+# Development (Recommended)
+./deploy.sh docker-compose dev
+
+# Production
+./deploy.sh docker-compose prod
+
+# Kubernetes Dev
+./deploy.sh k8s dev
+
+# Kubernetes Prod
+./deploy.sh k8s prod
 ```
 
 ---
 
-## 📦 Docker Compose Manual Commands
+## 📦 **Docker Compose Manual Commands**
+
+### **Development**
 
 ### Development
 ```powershell
@@ -43,7 +58,8 @@ docker-compose -f compose.dev.yaml logs -f
 docker-compose -f compose.dev.yaml build --no-cache
 ```
 
-### Production
+### **Production**
+
 ```powershell
 # Start
 docker-compose -f compose.yaml up -d
@@ -57,9 +73,10 @@ docker-compose -f compose.yaml logs -f
 
 ---
 
-## ☸️ Kubernetes Manual Commands
+## ☸️ **Kubernetes Manual Commands**
 
-### Build Images
+### **Build Images**
+
 ```powershell
 # Dev
 docker build -t ocr-pipeline:dev -f Dockerfile.dev .
@@ -68,7 +85,8 @@ docker build -t ocr-pipeline:dev -f Dockerfile.dev .
 docker build -t ocr-pipeline:latest -f Dockerfile .
 ```
 
-### Deploy
+### **Deploy**
+
 ```powershell
 # Dev
 kubectl apply -f k8s/deployment-dev.yaml
@@ -77,7 +95,8 @@ kubectl apply -f k8s/deployment-dev.yaml
 kubectl apply -f k8s/deployment.yaml
 ```
 
-### Check Status
+### **Check Status**
+
 ```powershell
 # Dev
 kubectl get all -n ocr-pipeline-dev
@@ -86,7 +105,8 @@ kubectl get all -n ocr-pipeline-dev
 kubectl get all -n ocr-pipeline
 ```
 
-### View Logs
+### **View Logs**
+
 ```powershell
 # Dev
 kubectl logs -f deployment/flask-app-dev -n ocr-pipeline-dev
@@ -95,7 +115,8 @@ kubectl logs -f deployment/flask-app-dev -n ocr-pipeline-dev
 kubectl logs -f deployment/flask-app-deployment -n ocr-pipeline
 ```
 
-### Access Application
+### **Port Forward**
+
 ```powershell
 # Dev
 kubectl port-forward -n ocr-pipeline-dev svc/flask-app-service 5000:5000
@@ -104,7 +125,8 @@ kubectl port-forward -n ocr-pipeline-dev svc/flask-app-service 5000:5000
 kubectl port-forward -n ocr-pipeline svc/flask-app-service 5000:5000
 ```
 
-### Delete
+### **Delete Deployment**
+
 ```powershell
 # Dev
 kubectl delete -f k8s/deployment-dev.yaml
@@ -115,17 +137,19 @@ kubectl delete -f k8s/deployment.yaml
 
 ---
 
-## 🔧 Direct Development (No Containers)
+## 🔧 **Direct Development (Without Containers)**
 
-### Backend
+### **Backend**
+
 ```powershell
 .\start-flask.ps1
-# Or manually:
+# or
 cd backend
 python -m flask run --host=0.0.0.0 --port=5000 --debug
 ```
 
-### Frontend
+### **Frontend**
+
 ```powershell
 cd frontend
 bun install
@@ -134,28 +158,33 @@ bun run start
 
 ---
 
-## 🌐 Access URLs
+## 🌐 **Access URLs**
 
-**Docker Compose Dev:**
-- Frontend: http://localhost:4200
-- Backend: http://localhost:5000
+### **Docker Compose (Dev)**
 
-**Docker Compose Prod:**
-- Application: http://localhost
+* Frontend: [http://localhost:4200](http://localhost:4200)
+* Backend: [http://localhost:5000](http://localhost:5000)
 
-**Kubernetes:**
-- After port-forward: http://localhost:5000
+### **Docker Compose (Prod)**
 
-**With Nginx:**
-- API: http://api.localhost
-- Auth: http://auth.localhost
-- App: http://app.localhost
+* App: [http://localhost](http://localhost)
+
+### **Kubernetes (after port-forward)**
+
+* [http://localhost:5000](http://localhost:5000)
+
+### **With Nginx**
+
+* API: [http://api.localhost](http://api.localhost)
+* Auth: [http://auth.localhost](http://auth.localhost)
+* App: [http://app.localhost](http://app.localhost)
 
 ---
 
-## 🔍 Troubleshooting
+## 🔍 **Troubleshooting**
 
-### Docker
+### **Docker**
+
 ```powershell
 # Check Docker
 docker version
@@ -171,7 +200,8 @@ docker container prune -f
 docker image prune -a -f
 ```
 
-### Kubernetes
+### **Kubernetes**
+
 ```powershell
 # Check cluster
 kubectl cluster-info
@@ -192,9 +222,10 @@ kubectl exec -it <pod-name> -n ocr-pipeline -- /bin/bash
 
 ---
 
-## 💡 Common Workflows
+## 💡 **Common Workflows**
 
-### Fresh Start
+### **Fresh Start**
+
 ```powershell
 docker-compose -f compose.dev.yaml down -v
 kubectl delete -f k8s/deployment-dev.yaml
@@ -202,7 +233,8 @@ docker rmi ocr-pipeline:dev ocr-pipeline:latest
 .\deploy.ps1 -Target docker-compose -Environment dev
 ```
 
-### Quick Restart
+### **Quick Restart**
+
 ```powershell
 # Docker
 docker-compose -f compose.dev.yaml restart
@@ -211,7 +243,8 @@ docker-compose -f compose.dev.yaml restart
 kubectl rollout restart deployment/flask-app-dev -n ocr-pipeline-dev
 ```
 
-### Update & Redeploy
+### **Update & Redeploy**
+
 ```powershell
 # Docker Compose
 .\deploy.ps1 -Target docker-compose -Environment dev
@@ -219,4 +252,42 @@ kubectl rollout restart deployment/flask-app-dev -n ocr-pipeline-dev
 # Kubernetes
 docker build -t ocr-pipeline:dev -f Dockerfile.dev .
 kubectl rollout restart deployment/flask-app-dev -n ocr-pipeline-dev
+```
+
+---
+
+# 🖥️ **One-Time Setup**
+
+## **Windows**
+
+```powershell
+# Install Docker
+.\setup-server.ps1
+
+# Setup Nginx (optional, for subdomains)
+.\setup-nginx.ps1
+
+# Deploy
+.\deploy.ps1 -Target docker-compose -Environment dev
+```
+
+**You only need `setup-nginx.ps1` when doing local development with subdomains.**
+Not required for real production servers.
+
+---
+
+## **Linux**
+
+```bash
+# Install Docker
+chmod +x setup-server.sh
+sudo ./setup-server.sh
+
+# Optional: setup Nginx for subdomains
+sudo ./setup-nginx.sh
+
+# Deploy
+chmod +x deploy.sh
+./deploy.sh docker-compose prod
+./deploy.sh docker-compose dev
 ```
