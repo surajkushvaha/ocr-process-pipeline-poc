@@ -1,0 +1,8 @@
+# Add these lines to your Windows hosts file
+# Location: C:\Windows\System32\drivers\etc\hosts
+# (Run Notepad as Administrator to edit)
+
+127.0.0.1 localhost
+127.0.0.1 api.localhost
+127.0.0.1 auth.localhost
+127.0.0.1 app.localhost

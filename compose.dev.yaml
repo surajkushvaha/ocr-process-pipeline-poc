@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Development environment with hot reload
+  flask-app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ocr-flask-dev
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PORT=5000
+    ports:
+      - "5000:5000"
+      - "4200:4200"
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - /app/frontend/node_modules
+    networks:
+      - ocr-network-dev
+    restart: unless-stopped
+
+  # Redis for development
+  redis-dev:
+    image: redis:7-alpine
+    container_name: ocr-redis-dev
+    ports:
+      - "6379:6379"
+    networks:
+      - ocr-network-dev
+
+  # PostgreSQL for development
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: ocr-postgres-dev
+    environment:
+      - POSTGRES_DB=ocr_db_dev
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    networks:
+      - ocr-network-dev
+
+networks:
+  ocr-network-dev:
+    driver: bridge
+
+volumes:
+  postgres-dev-data:

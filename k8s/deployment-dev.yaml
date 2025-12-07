@@ -1,0 +1,74 @@
+# Development Kubernetes Deployment (Minikube/Kind)
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ocr-pipeline-dev
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-app-config-dev
+  namespace: ocr-pipeline-dev
+data:
+  FLASK_ENV: "development"
+  FLASK_DEBUG: "1"
+  PORT: "5000"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app-dev
+  namespace: ocr-pipeline-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app-dev
+  template:
+    metadata:
+      labels:
+        app: flask-app-dev
+    spec:
+      containers:
+      - name: flask-app
+        image: ocr-pipeline:dev
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        - containerPort: 4200
+        envFrom:
+        - configMapRef:
+            name: flask-app-config-dev
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service-dev
+  namespace: ocr-pipeline-dev
+spec:
+  type: NodePort
+  selector:
+    app: flask-app-dev
+  ports:
+  - port: 5000
+    targetPort: 5000
+    nodePort: 30500
+    protocol: TCP
+    name: flask
+  - port: 4200
+    targetPort: 4200
+    nodePort: 30420
+    protocol: TCP
+    name: angular

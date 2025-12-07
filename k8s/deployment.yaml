@@ -1,0 +1,338 @@
+# Kubernetes Deployment for OCR Pipeline POC
+
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ocr-pipeline
+
+---
+# ConfigMap for environment variables
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-app-config
+  namespace: ocr-pipeline
+data:
+  FLASK_ENV: "production"
+  PORT: "5000"
+  SERVER_NAME: "flask-app-service:5000"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flask-app-secret
+  namespace: ocr-pipeline
+type: Opaque
+stringData:
+  POSTGRES_USER: "ocr_user"
+  POSTGRES_PASSWORD: "ocr_password"
+  POSTGRES_DB: "ocr_db"
+
+---
+# PersistentVolumeClaim for uploads
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads-pvc
+  namespace: ocr-pipeline
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# PersistentVolumeClaim for logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logs-pvc
+  namespace: ocr-pipeline
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# Deployment for Flask App
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app-deployment
+  namespace: ocr-pipeline
+  labels:
+    app: flask-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app
+        image: ocr-pipeline:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: flask-app-config
+        - secretRef:
+            name: flask-app-secret
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+        - name: logs
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+
+---
+# Service for Flask App
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+  namespace: ocr-pipeline
+  labels:
+    app: flask-app
+spec:
+  type: ClusterIP
+  selector:
+    app: flask-app
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+    name: http
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  namespace: ocr-pipeline
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        emptyDir: {}
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: ocr-pipeline
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+
+---
+# PostgreSQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-statefulset
+  namespace: ocr-pipeline
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        envFrom:
+        - secretRef:
+            name: flask-app-secret
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: ocr-pipeline
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+
+---
+# Nginx Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ocr-ingress
+  namespace: ocr-pipeline
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-app-service
+            port:
+              number: 5000
+  - host: api.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-app-service
+            port:
+              number: 5000
+  - host: app.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-app-service
+            port:
+              number: 5000
+
+---
+# HorizontalPodAutoscaler for Flask App
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: flask-app-hpa
+  namespace: ocr-pipeline
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: flask-app-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

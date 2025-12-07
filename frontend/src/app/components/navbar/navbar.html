@@ -1,0 +1,9 @@
+<nav class="brand flex items-center w-full px-4 py-3 space-x-2 border-2">
+  <button hlmSidebarTrigger
+    class="p-2 rounded-lg text-primary bg-white/10 hover:bg-white/20 transition-colors duration-200 cursor-pointer">
+    <ng-icon hlm [name]="isSidebarCollapsed() ? 'lucideChevronLeft' : 'lucideChevronRight'" />
+  </button>
+  @if(!isSidebarCollapsed()){
+  <img src="favicon.ico" alt="Brand Logo" class="h-6 w-6 object-contain ml-2" />
+  }
+</nav>

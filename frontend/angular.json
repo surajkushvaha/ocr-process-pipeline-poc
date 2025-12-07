@@ -27,9 +27,15 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/@pdftron/webviewer/public",
+                "output": "/public/webviewer"
               }
             ],
             "styles": [
+              "src/tailwind.css",
               "src/styles.scss"
             ],
             "outputPath": "../dist/frontend"

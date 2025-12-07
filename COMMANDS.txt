@@ -1,0 +1,222 @@
+# OCR Pipeline - Deployment Commands
+
+Quick reference for all deployment commands.
+
+## 🚀 Quick Start Commands
+
+### Development (Recommended)
+```powershell
+.\deploy.ps1 -Target docker-compose -Environment dev
+```
+
+### Production
+```powershell
+.\deploy.ps1 -Target docker-compose -Environment prod
+```
+
+### Kubernetes Dev
+```powershell
+.\deploy.ps1 -Target k8s -Environment dev
+```
+
+### Kubernetes Prod
+```powershell
+.\deploy.ps1 -Target k8s -Environment prod
+```
+
+---
+
+## 📦 Docker Compose Manual Commands
+
+### Development
+```powershell
+# Start
+docker-compose -f compose.dev.yaml up -d
+
+# Stop
+docker-compose -f compose.dev.yaml down
+
+# Logs
+docker-compose -f compose.dev.yaml logs -f
+
+# Rebuild
+docker-compose -f compose.dev.yaml build --no-cache
+```
+
+### Production
+```powershell
+# Start
+docker-compose -f compose.yaml up -d
+
+# Stop
+docker-compose -f compose.yaml down
+
+# Logs
+docker-compose -f compose.yaml logs -f
+```
+
+---
+
+## ☸️ Kubernetes Manual Commands
+
+### Build Images
+```powershell
+# Dev
+docker build -t ocr-pipeline:dev -f Dockerfile.dev .
+
+# Prod
+docker build -t ocr-pipeline:latest -f Dockerfile .
+```
+
+### Deploy
+```powershell
+# Dev
+kubectl apply -f k8s/deployment-dev.yaml
+
+# Prod
+kubectl apply -f k8s/deployment.yaml
+```
+
+### Check Status
+```powershell
+# Dev
+kubectl get all -n ocr-pipeline-dev
+
+# Prod
+kubectl get all -n ocr-pipeline
+```
+
+### View Logs
+```powershell
+# Dev
+kubectl logs -f deployment/flask-app-dev -n ocr-pipeline-dev
+
+# Prod
+kubectl logs -f deployment/flask-app-deployment -n ocr-pipeline
+```
+
+### Access Application
+```powershell
+# Dev
+kubectl port-forward -n ocr-pipeline-dev svc/flask-app-service 5000:5000
+
+# Prod
+kubectl port-forward -n ocr-pipeline svc/flask-app-service 5000:5000
+```
+
+### Delete
+```powershell
+# Dev
+kubectl delete -f k8s/deployment-dev.yaml
+
+# Prod
+kubectl delete -f k8s/deployment.yaml
+```
+
+---
+
+## 🔧 Direct Development (No Containers)
+
+### Backend
+```powershell
+.\start-flask.ps1
+# Or manually:
+cd backend
+python -m flask run --host=0.0.0.0 --port=5000 --debug
+```
+
+### Frontend
+```powershell
+cd frontend
+bun install
+bun run start
+```
+
+---
+
+## 🌐 Access URLs
+
+**Docker Compose Dev:**
+- Frontend: http://localhost:4200
+- Backend: http://localhost:5000
+
+**Docker Compose Prod:**
+- Application: http://localhost
+
+**Kubernetes:**
+- After port-forward: http://localhost:5000
+
+**With Nginx:**
+- API: http://api.localhost
+- Auth: http://auth.localhost
+- App: http://app.localhost
+
+---
+
+## 🔍 Troubleshooting
+
+### Docker
+```powershell
+# Check Docker
+docker version
+
+# View containers
+docker ps -a
+
+# View logs
+docker logs <container-name> -f
+
+# Clean up
+docker container prune -f
+docker image prune -a -f
+```
+
+### Kubernetes
+```powershell
+# Check cluster
+kubectl cluster-info
+kubectl config current-context
+
+# Check pods
+kubectl get pods -n ocr-pipeline -o wide
+
+# Describe pod
+kubectl describe pod <pod-name> -n ocr-pipeline
+
+# Check events
+kubectl get events -n ocr-pipeline --sort-by='.lastTimestamp'
+
+# Shell into pod
+kubectl exec -it <pod-name> -n ocr-pipeline -- /bin/bash
+```
+
+---
+
+## 💡 Common Workflows
+
+### Fresh Start
+```powershell
+docker-compose -f compose.dev.yaml down -v
+kubectl delete -f k8s/deployment-dev.yaml
+docker rmi ocr-pipeline:dev ocr-pipeline:latest
+.\deploy.ps1 -Target docker-compose -Environment dev
+```
+
+### Quick Restart
+```powershell
+# Docker
+docker-compose -f compose.dev.yaml restart
+
+# Kubernetes
+kubectl rollout restart deployment/flask-app-dev -n ocr-pipeline-dev
+```
+
+### Update & Redeploy
+```powershell
+# Docker Compose
+.\deploy.ps1 -Target docker-compose -Environment dev
+
+# Kubernetes
+docker build -t ocr-pipeline:dev -f Dockerfile.dev .
+kubectl rollout restart deployment/flask-app-dev -n ocr-pipeline-dev
+```

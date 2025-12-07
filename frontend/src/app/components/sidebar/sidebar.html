@@ -1,0 +1,94 @@
+<div hlmSidebarWrapper class="min-h-screen">
+
+  <hlm-sidebar>
+    <!-- HEADER -->
+    <button hlmSidebarHeader class="p-4 space-y-1 pointer-events-auto w-full">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+          <img [src]="sidebarItems.logoPath" [alt]="sidebarItems.brandName" class="h-6 w-6 object-contain" />
+        </div>
+
+        <div class="flex flex-col">
+          <span class="font-semibold">{{ sidebarItems.brandName }}</span>
+        </div>
+      </div>
+    </button>
+
+    <!-- CONTENT -->
+    <div hlmSidebarContent>
+      <div class="px-4">
+        <div class="mt-4">
+          <ul hlmSidebarMenu>
+
+            <!-- ROOT LEVEL -->
+            @for (item of sidebarItems.menuItems; track $index) {
+
+            <!-- CASE 1: Section (has subItems) -->
+            @if (item.subItems) {
+            <li hlmSidebarMenuItem>
+
+              <button hlmSidebarMenuButton (click)="item.expandable = !item.expandable">
+                <ng-icon hlm [name]="item.icon"></ng-icon>
+                <span>{{ item.title }}</span>
+              </button>
+              @if(item.expandable){
+              <ul hlmSidebarMenuSub>
+                @for (sub of item.subItems; track sub.title) {
+                <li hlmSidebarMenuSubItem>
+
+                  <!-- Route item -->
+                  @if (sub.route) {
+                  <a hlmSidebarMenuSubButton [routerLink]="sub.route">
+                    <ng-icon hlm [name]="sub.icon"></ng-icon>
+                    <span>{{ sub.title }}</span>
+                  </a>
+                  }
+
+                  <!-- onClick item -->
+                  @if (sub.onClick) {
+                  <button hlmSidebarMenuSubButton (click)="sub.onClick()">
+                    <ng-icon hlm [name]="sub.icon"></ng-icon>
+                    <span>{{ sub.title }}</span>
+                  </button>
+                  }
+
+                </li>
+                }
+              </ul>
+              }
+            </li>
+            }
+
+            <!-- CASE 2: Simple route item -->
+            @if (item.route) {
+            <li hlmSidebarMenuItem>
+              <a hlmSidebarMenuButton [routerLink]="item.route">
+                <ng-icon hlm [name]="item.icon"></ng-icon>
+                <span>{{ item.title }}</span>
+              </a>
+            </li>
+            }
+
+            <!-- CASE 3: Click item -->
+            @if (item.onClick) {
+            <li hlmSidebarMenuItem>
+              <button hlmSidebarMenuButton (click)="item.onClick()">
+                <ng-icon hlm [name]="item.icon"></ng-icon>
+                <span>{{ item.title }}</span>
+              </button>
+            </li>
+            }
+            }
+
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+  </hlm-sidebar>
+
+  <!-- MAIN CONTENT -->
+  <ng-content></ng-content>
+
+</div>

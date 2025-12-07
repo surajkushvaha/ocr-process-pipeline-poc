@@ -10,6 +10,7 @@ dependencies = [
     "flask-socketio>=5.5.1",
     "paddleocr[all]>=3.3.2",
     "paddlepaddle>=3.2.2",
+    "pydantic>=2.12.5",
     "pytesseract>=0.3.13",
     "spacy>=3.8.11",
     "transformers>=4.57.3",

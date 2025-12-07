@@ -1,0 +1,49 @@
+# Dockerfile for development with hot reload
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
+
+# Copy dependency files
+COPY pyproject.toml ./
+COPY frontend/package.json frontend/bun.lock* ./frontend/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip uv && \
+    uv pip install --system -r pyproject.toml
+
+# Install Angular dependencies with Bun
+WORKDIR /app/frontend
+RUN bun install
+
+WORKDIR /app
+
+# Copy source code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/uploads /app/logs
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    FLASK_APP=backend.main \
+    FLASK_ENV=development \
+    PORT=5000
+
+# Expose ports
+EXPOSE 5000 4200
+
+# Run both Flask and Angular in development mode
+CMD ["sh", "-c", "cd frontend && bun run start & python -m backend.main"]

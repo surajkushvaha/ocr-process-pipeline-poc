@@ -1,0 +1,68 @@
+<nav hlmBreadcrumb class="flex items-center justify-between px-4">
+  <ol hlmBreadcrumbList>
+    <li hlmBreadcrumbItem>
+      <a hlmBreadcrumbLink link="/">Home</a>
+    </li>
+    <li hlmBreadcrumbSeparator></li>
+    <li hlmBreadcrumbItem>
+      <button [hlmDropdownMenuTrigger]="breadcrumbDropdown" class="cursor-pointer">
+        <hlm-breadcrumb-ellipsis class="size-4" />
+        <span class="sr-only">Toggle menu</span>
+      </button>
+      <ng-template #breadcrumbDropdown>
+        <hlm-dropdown-menu>
+          <button hlmDropdownMenuItem id="document">
+            <span>Documentation</span>
+          </button>
+          <button hlmDropdownMenuItem id="themes">
+            <span>Themes</span>
+          </button>
+          <button hlmDropdownMenuItem id="github">
+            <span>Github</span>
+          </button>
+        </hlm-dropdown-menu>
+      </ng-template>
+    </li>
+    <li hlmBreadcrumbSeparator></li>
+    <li hlmBreadcrumbItem>
+      <a hlmBreadcrumbLink link="/components">Components</a>
+    </li>
+    <li hlmBreadcrumbSeparator></li>
+    <li hlmBreadcrumbItem>
+      <span hlmBreadcrumbPage>Breadcrumb</span>
+    </li>
+  </ol>
+
+
+  <hlm-dialog>
+    <button hlmDialogTrigger hlmBtn variant="outline" size="sm" (click)="openModal()">
+      <ng-icon hlm size="sm" name="lucidePlus" />
+      Add File
+    </button>
+    <hlm-dialog-content class="sm:max-w-[425px]" *brnDialogContent="let ctx"  >
+      <div class="grid gap-4">
+        <div hlmEmpty class="border border-dashed">
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon">
+              <ng-icon name="lucideFile" />
+            </div>
+            <div hlmEmptyTitle>Upload Files</div>
+            <div hlmEmptyDescription>Upload files to your cloud storage to access them anywhere.</div>
+          </div>
+          <div hlmEmptyContent>
+            <label >
+              <input type="file" id='uploadFile2' class="hidden" #fileInput (change)="onChangeFile($event)" multiple/>
+              <button hlmBtn variant="outline" (click)="fileInput.click()">Upload Files</button>
+            </label>
+          </div>
+        </div>
+
+      </div>
+      <hlm-dialog-footer>
+        <button hlmBtn variant="outline" brnDialogClose>Cancel</button>
+        <button hlmBtn type="submit">Save changes</button>
+      </hlm-dialog-footer>
+    </hlm-dialog-content>
+  </hlm-dialog>
+
+</nav>

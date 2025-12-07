@@ -5,7 +5,7 @@ def create_app():
     app = Flask(__name__)
     
     # For local development with subdomains
-    app.config['SERVER_NAME'] = 'surajkushvaha.ai:5000'  # or 'abc.com:5000'
+    app.config['SERVER_NAME'] = 'localhost:5000'  # or 'abc.com:5000'
     
     socketio = SocketIO(app, cors_allowed_origins="*")
     
@@ -17,4 +17,3 @@ def create_app():
     
     return app, socketio
 
-# surajkushvaha.ai app.surajkushvaha.ai api.surajkushvaha.ai auth.surajkushvaha.ai  

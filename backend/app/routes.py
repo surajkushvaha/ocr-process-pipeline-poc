@@ -7,6 +7,11 @@ def register_routes(app):
     DIST_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../dist/frontend/browser/'))
     AUTH_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../dist/auth/browser/'))  # Fixed typo
     
+    # Health check endpoint (no subdomain - for Docker/K8s)
+    @app.route('/health')
+    def health_check():
+        return jsonify({"status": "OK", "service": "ocr-pipeline"}), 200
+    
     # API subdomain (api.abc.com)
     @app.route('/health', subdomain='api')
     def health():
